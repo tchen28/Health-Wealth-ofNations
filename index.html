@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html>
+<style>
+ body {
+  font: 11px sans-serif;
+}
+
+.axis path,
+.axis line {
+  fill: none;
+  stroke: #000;
+  shape-rendering: crispEdges;
+}
+
+.dot {
+  stroke: #000;
+}
+
+.tooltip {
+  position: absolute;
+  width: 200px;
+  height: 28px;
+  pointer-events: none;
+}
+
+.button {
+  background-color: white;
+    color: black;
+
+}
+</style>
+
+<head>
+
+	<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <meta charset="utf-8">
+  <script src="https://d3js.org/d3.v3.min.js"></script>
+  <SCRIPT SRC="dataHandling.js"></script>
+	
+	<Title> Wealth and Health of Nations </Title>
+</head>
+<body>
+<div id="buttons">
+    <input name="previousButton"
+           type="button" 
+           value="Previous"
+           onclick="Update(-1)" />
+
+    <input name="nextButton"
+           type="button" 
+           value="Next"
+           onclick="Update(1)" />
+</div>
+
+
+<script type = "text/javascript">
+
+var Continents = "countries.csv";
+var GDP = "d1d54862-ce45-47f4-837b-1b77fbdaf757_Data.csv";
+var Health = "life-expectancy.csv";
+var Population = "d45252d7-5153-4c59-88b4-18447a0e3315_Data.csv";
+
+//Find the countries in which all of the Datasets share
+var Countries = [];
+  d3.csv(GDP, function(data){
+    data.forEach(function(d){
+      Countries.push(d.Country);
+    });
+  });
+
+  d3.csv(Health, function(data){
+    var countries = [];
+    data.forEach(function(d){
+      countries.push(d.Country);
+    });
+    for (i=0; i<Countries.length; i++){
+      if (countries.indexOf(Countries[i])==-1){
+        //console.log(Countries[i])
+        Countries.splice(i, 1);
+        i--;
+      }
+    }
+  });
+
+  d3.csv(Population, function(data){
+    var countries = []
+    data.forEach(function(d){
+      countries.push(d.Country);
+    });
+    for (i=0; i<Countries.length; i++){
+      if (countries.indexOf(Countries[i])==-1){
+        //console.log(Countries[i])
+        Countries.splice(i, 1);
+        i--;
+      }
+    }
+  });
+
+  var countconti = [];
+  d3.csv(Continents, function(data){
+    for (var c in Countries){
+      //console.log(Countries[c]);
+      var notFound = true;
+      data.forEach(function(d){
+        if (notFound){
+          if (d.Country==Countries[c]){
+            countconti.push(d.Continent);
+            notFound = false;
+          }
+        }
+      });
+      if (notFound){
+        countconti.push("Unknown");
+      }
+    }
+  });
+
+var margin = {top: 60, right: 20, bottom: 30, left: 50},
+    width = 1000 - margin.left - margin.right,
+    height = 600 - margin.top - margin.bottom;
+
+var tooltip = d3.select("body").append("div")
+    .attr("class", "tooltip")
+    .style("opacity", 0);
+
+var svg = d3.select("body").append("svg")
+    .attr("width", width + margin.left + margin.right)
+    .attr("height", height + margin.top + margin.bottom)
+    .append("g")
+    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+var year = 1960;
+var color = d3.scale.category10();
+
+var xScale = d3.scale.linear().domain([90000, 0]).range([width, 0]),
+xAxis = d3.svg.axis().scale(xScale).orient("bottom").tickFormat(d3.format("d"));
+
+var yScale = d3.scale.linear().domain([15, 90]).range([height, 0]), // value -> display
+yAxis = d3.svg.axis().scale(yScale).orient("left");
+
+ svg.append("g")
+      .attr("class", "x axis")
+      .attr("transform", "translate(0," + height + ")")
+      .call(xAxis)
+      .append("text")
+      .attr("class", "label")
+      .attr("x", width)
+      .attr("y", -6)
+      .style("text-anchor", "end")
+      .text("GDP");
+
+      svg.append("g")
+      .attr("class", "y axis")
+      .call(yAxis)
+      .append("text")
+      .attr("class", "label")
+      .attr("transform", "rotate(-90)")
+      .attr("y", 6)
+      .attr("dy", ".71em")
+      .style("text-anchor", "end")
+      .text("Life expectancy");
+
+
+
+function Update(x){
+  if ((year<1960) || (year>2012)){
+    alert("Selection out of range");
+    year=1960;
+  }
+
+  console.log(year);
+  d3.csv(GDP, function(error, gdp){
+  d3.csv(Health, function(error, health){
+    d3.csv(Population, function(error, population){
+      
+      svg.select("#circles").remove();
+      svg.select("#title").remove();
+
+      year = year + x;
+      var y = year.toString();
+
+      console.log(y);
+      var yearGDP = [];
+      var yearHealth = [];
+      var yearPopulation = [];
+
+      gdp.forEach(function(d){
+          if (Countries.indexOf(d.Country)!=-1){
+            if (isNaN(+d[y])) yearGDP.push(0);
+            else yearGDP.push(+d[y]);
+          }
+      });
+
+      health.forEach(function(d){
+      if (d.Year==y){
+        if (Countries.indexOf(d.Country)!=-1){
+          //console.log(d.LifeExp)
+          if (d.LifeExp==".."){
+            yearHealth.push(0);
+          }
+          else yearHealth.push(+d.LifeExp);
+        }
+      }
+      });
+
+      population.forEach(function(d){
+        if (Countries.indexOf(d.Country)!=-1){
+          if (isNaN(+d[y])) yearPopulation.push(0);
+          else yearPopulation.push(+d[y]);
+        }
+      });
+
+      var allData = d3.zip(Countries, yearGDP, yearHealth, yearPopulation, countconti);
+
+      var circle = svg.append("g").attr("id", "circles")
+        .selectAll("circle")
+        .data(allData)
+        .enter().append("circle")
+        .attr("cx", function(d) {return xScale(d[1]);})
+        .attr("cy", function(d) {return yScale(d[2]);})
+        .attr("class", "y1")
+        .attr("r", function(d){return Math.pow(d[3], 1/2)/900;})
+        .style("fill", function(d) { return color(d[4]);})
+        .style("stroke", "black")
+        .on("mouseover", function(d) {
+          tooltip.transition()
+               .duration(200)
+               .style("opacity", .9);
+          tooltip.html(d[0] + "<br/> " + "GDP: " + d[1] + "<br/>" + " Life Expectancy: " + d[2] + "<br/>" + " Population: " + d[3])
+        })
+        .on("mouseout", function(d) {
+          tooltip.transition()
+               .duration(500)
+               .style("opacity", 0)
+        });
+
+        var title = svg.append("g").attr("id", "title")
+          .append("text")
+          .attr("x", (width / 2))             
+          .attr("y", 0 - (margin.top / 2))
+          .attr("text-anchor", "middle")  
+          .style("font-size", "18px") 
+          .text(y);
+        
+      });
+    });
+  });
+};
+
+Update(0);
+
+
+
+
+
+</script>
+
+</body>
+
+</html>
