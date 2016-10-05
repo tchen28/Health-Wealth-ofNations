@@ -22,12 +22,6 @@
   height: 28px;
   pointer-events: none;
 }
-
-.button {
-  background-color: white;
-    color: black;
-
-}
 </style>
 
 <head>
@@ -35,7 +29,6 @@
 	<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
   <meta charset="utf-8">
   <script src="https://d3js.org/d3.v3.min.js"></script>
-  <SCRIPT SRC="dataHandling.js"></script>
 	
 	<Title> Wealth and Health of Nations </Title>
 </head>
@@ -61,7 +54,7 @@ var Health = "life-expectancy.csv";
 var Population = "d45252d7-5153-4c59-88b4-18447a0e3315_Data.csv";
 
 //Find the countries in which all of the Datasets share
-var Countries = [];
+var Countries = new Array();
   d3.csv(GDP, function(data){
     data.forEach(function(d){
       Countries.push(d.Country);
@@ -83,7 +76,7 @@ var Countries = [];
   });
 
   d3.csv(Population, function(data){
-    var countries = []
+    var countries = [];
     data.forEach(function(d){
       countries.push(d.Country);
     });
@@ -95,6 +88,8 @@ var Countries = [];
       }
     }
   });
+
+  console.log(Countries);
 
   var countconti = [];
   d3.csv(Continents, function(data){
@@ -114,9 +109,10 @@ var Countries = [];
       }
     }
   });
+  console.log(countconti);
 
-var margin = {top: 60, right: 20, bottom: 30, left: 50},
-    width = 1000 - margin.left - margin.right,
+var margin = {top: 70, right: 20, bottom: 30, left: 50},
+    width = 1200 - margin.left - margin.right,
     height = 600 - margin.top - margin.bottom;
 
 var tooltip = d3.select("body").append("div")
@@ -138,6 +134,7 @@ xAxis = d3.svg.axis().scale(xScale).orient("bottom").tickFormat(d3.format("d"));
 var yScale = d3.scale.linear().domain([15, 90]).range([height, 0]), // value -> display
 yAxis = d3.svg.axis().scale(yScale).orient("left");
 
+//x axis
  svg.append("g")
       .attr("class", "x axis")
       .attr("transform", "translate(0," + height + ")")
@@ -149,7 +146,8 @@ yAxis = d3.svg.axis().scale(yScale).orient("left");
       .style("text-anchor", "end")
       .text("GDP");
 
-      svg.append("g")
+//y axis
+svg.append("g")
       .attr("class", "y axis")
       .call(yAxis)
       .append("text")
@@ -163,13 +161,8 @@ yAxis = d3.svg.axis().scale(yScale).orient("left");
 
 
 function Update(x){
-  if ((year<1960) || (year>2012)){
-    alert("Selection out of range");
-    year=1960;
-  }
-
-  console.log(year);
-  d3.csv(GDP, function(error, gdp){
+  //console.log(year);
+d3.csv(GDP, function(error, gdp){
   d3.csv(Health, function(error, health){
     d3.csv(Population, function(error, population){
       
@@ -177,9 +170,14 @@ function Update(x){
       svg.select("#title").remove();
 
       year = year + x;
+      if ((year<1960) || (year>2009)){
+        alert("Selection out of range");
+        year=1960;
+      }
+
       var y = year.toString();
 
-      console.log(y);
+      //console.log(y);
       var yearGDP = [];
       var yearHealth = [];
       var yearPopulation = [];
@@ -226,7 +224,7 @@ function Update(x){
           tooltip.transition()
                .duration(200)
                .style("opacity", .9);
-          tooltip.html(d[0] + "<br/> " + "GDP: " + d[1] + "<br/>" + " Life Expectancy: " + d[2] + "<br/>" + " Population: " + d[3])
+          tooltip.html(d[0] + "<br/> " + "GDP: " + d[1] + "<br/>" + " Life Expectancy: " + d[2] + "<br/>" + " Population: " + d[3] + "<br/>" + "Continent: " + d[4])
         })
         .on("mouseout", function(d) {
           tooltip.transition()
@@ -236,10 +234,10 @@ function Update(x){
 
         var title = svg.append("g").attr("id", "title")
           .append("text")
-          .attr("x", (width / 2))             
-          .attr("y", 0 - (margin.top / 2))
+          .attr("x", width-190)           
+          .attr("y", height-8)
           .attr("text-anchor", "middle")  
-          .style("font-size", "18px") 
+          .style("font-size", "150px") 
           .text(y);
         
       });
