@@ -1,0 +1,6 @@
+{
+  "name": "Health and wealth of nations",
+  "tagline": "Inspired by Gapminder",
+  "body": "# Health and Wealth of Nations\r\n\r\n###This is a brief exercise of using d3.js for data visualization, a partial recreation of gap minders health and wealth of nations, and Mike Bostock's d3 version. (I can only stand in awe of their work)\r\n\r\n###Data was taken from the [World Bank](http://data.worldbank.org/) website",
+  "note": "Don't delete this file! It's used internally to help with page regeneration."
+}
